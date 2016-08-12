@@ -1,19 +1,27 @@
 ##############################################################################
 #                  Seabury.SQL.get.code / Seabury.SQL.get.name               #
-##############################################################################
-Seabury.SQL.get.code = function(ODBC, GXNAME){
-  body <- 'SELECT * FROM A269_CARGO.A269_CARGO_SEABURY_GXCODE code'
-  dataS  <-  dbSendQuery(ODBC, body)
+# ##############################################################################
+# Seabury.SQL.get.code = function(ODBC, GXNAME){
+#   body <- 'SELECT * FROM A269_CARGO.A269_CARGO_SEABURY_GXCODE code'
+#   dataS  <-  dbSendQuery(ODBC, body)
+#   query.result <- fetch(dataS)
+#   name <- query.result[tolower(query.result$GXNAME) %like% tolower(GXNAME),]
+#   return(name[1,])
+# }
+
+Seabury.SQL.get.code = function(CargoDB){
+  body <- 'SELECT * FROM A269_CARGO.A269_CARGO_SEABURY_GXCODE code WHERE GXCODE IS NOT NULL'
+  dataS  <-  dbSendQuery(CargoDB, body)
   query.result <- fetch(dataS)
-  name <- query.result[tolower(query.result$GXNAME) %like% tolower(GXNAME),]
-  return(name[1,])
+  list <- c(query.result$GXCODE)
+  names(list) <- query.result$GXNAME
+  return(list)
 }
 
-
 # give a vector of GXCODE, return a data.frame of GXNAME
-Seabury.SQL.get.name = function(ODBC, GXCODE){
+Seabury.SQL.get.name = function(CargoDB, GXCODE){
   body <- 'SELECT * FROM A269_CARGO.A269_CARGO_SEABURY_GXCODE'
-  dataS  <-  dbSendQuery(ODBC, body)
+  dataS  <-  dbSendQuery(CargoDB, body)
   qr <- fetch(dataS)
   # name <- qr[qr$GXCODE == GXCODE, ]
   name = data.frame()

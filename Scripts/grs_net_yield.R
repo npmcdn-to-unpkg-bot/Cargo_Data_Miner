@@ -56,7 +56,7 @@ output_yield = function(dataset, city_list, path = paste(TEMPS,'/yield',sep = ''
   }
   
   out = output[-1,]
-  write.csv(out, file = path)
+  # write.csv(out, file = path)
   return(out)
 }
 

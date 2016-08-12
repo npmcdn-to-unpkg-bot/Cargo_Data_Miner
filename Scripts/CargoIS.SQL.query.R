@@ -26,39 +26,43 @@ CargoIS.SQL.query = function(ODBC,level, ORG, DST, year = NA){
     
   if (is.na(year) == TRUE){
     if (level == 'R2R'){
-      scp = paste("WHERE org.REGION_CODE = '",ORG,
-                  "' AND dst.REGION_CODE = '",DST,"'",sep = '')
+      scp = paste("WHERE org.REGION_CODE = '",gsub(",.*$", "", ORG),
+                  "' AND dst.REGION_CODE = '",gsub(",.*$", "", DST),"'",sep = '')
       script = paste(body, scp, sep = '')
     } else if (level == 'C2R'){
-      scp =  paste("WHERE data.ORIGIN_COUNTRY_CODE = '",ORG,
-                   "' AND dst.REGION_CODE = '",DST,"'",sep = '')
+      scp =  paste("WHERE data.ORIGIN_COUNTRY_CODE = '",gsub(",.*$", "", ORG),
+                   "' AND dst.REGION_CODE = '",gsub(",.*$", "", DST),"'",sep = '')
       script = paste(body, scp, sep = '')
     } else if (level == 'R2C'){
-      scp =  paste("WHERE org.REGION_CODE = '",ORG,
-                   "' AND dst.COUNTRY_CODE = '",DST,"'",sep = '')
+      scp =  paste("WHERE org.REGION_CODE = '",gsub(",.*$", "", ORG),
+                   "' AND dst.COUNTRY_CODE = '",gsub(",.*$", "", DST),"'",sep = '')
       script = paste(body, scp, sep = '')
     } else if (level == 'C2C'){
-      scp =  paste("WHERE data.ORIGIN_COUNTRY_CODE = '",ORG,
-                   "' AND dst.COUNTRY_CODE = '",DST,"'",sep = '')
+      scp =  paste("WHERE data.ORIGIN_COUNTRY_CODE = '",gsub(",.*$", "", ORG),
+                   "' AND dst.COUNTRY_CODE = '",gsub(",.*$", "", DST),"'",sep = '')
       script = paste(body, scp, sep = '')
     } else if (level == 'C2W'){
-      scp =  paste("WHERE data.ORIGIN_COUNTRY_CODE = '",ORG, "'",
+      scp =  paste("WHERE data.ORIGIN_COUNTRY_CODE = '",gsub(",.*$", "", ORG), "'",
                    sep = '')
       script = paste(body, scp, sep = '')
     } else if (level == 'W2C'){
-      scp =  paste("WHERE dst.COUNTRY_CODE = '",DST,"'",sep = '')
+      scp =  paste("WHERE dst.COUNTRY_CODE = '",gsub(",.*$", "", DST),"'",sep = '')
       script = paste(body, scp, sep = '')
     } else if (level == 'A2A'){
-      scp =  paste("WHERE data.ORIGIN_AIRPORT_CODE = '",ORG,
-                   "' AND data.DESTINATION_AIRPORT_CODE = '",DST,"'",sep = '')
+      scp =  paste("WHERE data.ORIGIN_AIRPORT_CODE = '",gsub(",.*$", "", ORG),
+                   "' AND data.DESTINATION_AIRPORT_CODE = '",gsub(",.*$", "", DST),"'",sep = '')
       script = paste(body, scp, sep = '')
     } else if (level == 'R2A'){
-      scp =  paste("WHERE org.REGION_CODE = '",ORG,
-                   "' AND data.DESTINATION_AIRPORT_CODE = '",DST,"'",sep = '')
+      scp =  paste("WHERE org.REGION_CODE = '",gsub(",.*$", "", ORG),
+                   "' AND data.DESTINATION_AIRPORT_CODE = '",gsub(",.*$", "", DST),"'",sep = '')
       script = paste(body, scp, sep = '')
     } else if (level == 'A2R'){
-      scp =  paste("WHERE data.ORIGIN_AIRPORT_CODE = '",ORG,
-                   "' AND dst.REGION_CODE = '",DST,"'",sep = '')
+      scp =  paste("WHERE data.ORIGIN_AIRPORT_CODE = '",gsub(",.*$", "", ORG),
+                   "' AND dst.REGION_CODE = '",gsub(",.*$", "", DST),"'",sep = '')
+      script = paste(body, scp, sep = '')
+    } else if (level == 'T2T') {
+      scp =  paste("WHERE data.ORIGIN_CITY_CODE = '",gsub(",.*$", "", ORG),
+                   "' AND data.DESTINATION_CITY_CODE = '",gsub(",.*$", "", DST),"'",sep = '')
       script = paste(body, scp, sep = '')
     } else if (level == 'ALL'){
       script = paste(body, sep = '')
@@ -66,38 +70,42 @@ CargoIS.SQL.query = function(ODBC,level, ORG, DST, year = NA){
   } else {
     if ( nchar(year) == 4 ){
       if (level == 'R2A'){
-        scp = paste("WHERE org.REGION_CODE = '",ORG,
-                    "' AND data.DESTINATION_AIRPORT_CODE = '",DST,"' AND data.SALES_YEAR = ",year,sep = '')
+        scp = paste("WHERE org.REGION_CODE = '",gsub(",.*$", "", ORG),
+                    "' AND data.DESTINATION_AIRPORT_CODE = '",gsub(",.*$", "", DST),"' AND data.SALES_YEAR = ",year,sep = '')
         script = paste(body, scp, sep = '')
       } else if (level == 'A2R'){
-        scp = paste("WHERE data.ORIGIN_AIRPORT_CODE = '",ORG,
-                    "' AND dst.REGION_CODE = '",DST,"' AND data.SALES_YEAR = ",year,sep = '')
+        scp = paste("WHERE data.ORIGIN_AIRPORT_CODE = '",gsub(",.*$", "", ORG),
+                    "' AND dst.REGION_CODE = '",gsub(",.*$", "", DST),"' AND data.SALES_YEAR = ",year,sep = '')
         script = paste(body, scp, sep = '')
       } else if (level == 'R2R'){
-        scp = paste("WHERE org.REGION_CODE = '",ORG,
-                    "' AND dst.REGION_CODE = '",DST,"' AND data.SALES_YEAR = ",year,sep = '')
+        scp = paste("WHERE org.REGION_CODE = '",gsub(",.*$", "", ORG),
+                    "' AND dst.REGION_CODE = '",gsub(",.*$", "", DST),"' AND data.SALES_YEAR = ",year,sep = '')
         script = paste(body, scp, sep = '')
       } else if (level == 'C2R'){
-        scp = paste("WHERE data.ORIGIN_COUNTRY_CODE = '",ORG,
-                    "' AND dst.REGION_CODE = '",DST,"' AND data.SALES_YEAR = ",year,sep = '')
+        scp = paste("WHERE data.ORIGIN_COUNTRY_CODE = '",gsub(",.*$", "", ORG),
+                    "' AND dst.REGION_CODE = '",gsub(",.*$", "", DST),"' AND data.SALES_YEAR = ",year,sep = '')
         script = paste(body, scp, sep = '')
       } else if (level == 'R2C'){
-        scp = paste("WHERE org.REGION_CODE = '",ORG,
-                    "' AND dst.COUNTRY_CODE = '",DST,"' AND data.SALES_YEAR = ",year,sep = '')
+        scp = paste("WHERE org.REGION_CODE = '",gsub(",.*$", "", ORG),
+                    "' AND dst.COUNTRY_CODE = '",gsub(",.*$", "", DST),"' AND data.SALES_YEAR = ",year,sep = '')
         script = paste(body, scp, sep = '')
       } else if (level == 'W2C'){
-        scp = paste("WHERE dst.COUNTRY_CODE = '",DST,"' AND data.SALES_YEAR = ",year,sep = '')
+        scp = paste("WHERE dst.COUNTRY_CODE = '",gsub(",.*$", "", DST),"' AND data.SALES_YEAR = ",year,sep = '')
         script = paste(body, scp, sep = '')
       } else if (level == 'C2C'){
-        scp = paste("WHERE data.ORIGIN_COUNTRY_CODE = '",ORG,
-                    "' AND dst.COUNTRY_CODE = '",DST,"' AND data.SALES_YEAR = ",year,sep = '')
+        scp = paste("WHERE data.ORIGIN_COUNTRY_CODE = '",gsub(",.*$", "", ORG),
+                    "' AND dst.COUNTRY_CODE = '",gsub(",.*$", "", DST),"' AND data.SALES_YEAR = ",year,sep = '')
+        script = paste(body, scp, sep = '')
+      } else if (level == 'T2T'){
+        scp = paste("WHERE data.ORIGIN_CITY_CODE = '",gsub(",.*$", "", ORG),
+                    "' AND data.DESTINATION_CITY_CODE = '",gsub(",.*$", "", DST),"' AND data.SALES_YEAR = ",year,sep = '')
         script = paste(body, scp, sep = '')
       } else if (level == 'A2A'){
-        scp = paste("WHERE data.ORIGIN_AIRPORT_CODE = '",ORG,
-                    "' AND data.DESTINATION_AIRPORT_CODE  = '",DST,"' AND data.SALES_YEAR = ",year,sep = '')
+        scp = paste("WHERE data.ORIGIN_AIRPORT_CODE = '",gsub(",.*$", "", ORG),
+                    "' AND data.DESTINATION_AIRPORT_CODE  = '",gsub(",.*$", "", DST),"' AND data.SALES_YEAR = ",year,sep = '')
         script = paste(body, scp, sep = '')
       } else if (level == 'C2W'){
-        scp = paste("WHERE data.ORIGIN_COUNTRY_CODE = '", ORG, "' AND data.SALES_YEAR = ",year,sep = '')
+        scp = paste("WHERE data.ORIGIN_COUNTRY_CODE = '", gsub(",.*$", "", ORG), "' AND data.SALES_YEAR = ",year,sep = '')
         script = paste(body, scp, sep = '')
       } else if (level == 'ALL'){
         scp = paste("WHERE data.SALES_YEAR = ",year,sep = '')
