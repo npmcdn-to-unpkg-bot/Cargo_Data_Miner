@@ -47,7 +47,7 @@ treemap_cargois_gvis <- function(Data, ORG = TRUE, PLOT = TRUE){
   if(PLOT){
     gvisTreeMap(data = tt, idvar = 'Group.1', parentvar = 'Group.2', sizevar = 'weight',
                 colorvar = 'lgrsyld',
-                options=list(width=650, height=400,
+                options=list( #width=650, height=400,
                              fontSize=16,
                              minColor='#F5B041',
                              midColor='#F0F3F4',

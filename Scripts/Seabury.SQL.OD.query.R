@@ -66,59 +66,59 @@ Seabury.SQL.OD.query <- function(ODBC, level, ORG, DST, year = NA, country.name 
   if (is.na(year) == TRUE){
     if (level == 'C2C'){
       script = paste("
-            WHERE SUBSTR(data.ORIGIN_COUNTRY,1,2) = '", ORG,"'
-            AND SUBSTR(data.DESTINATION_COUNTRY,1,2) = '", DST,"'", sep = "")
+            WHERE SUBSTR(data.ORIGIN_COUNTRY,1,2) = '", gsub(",.*$", "", gsub(",.*$", "", ORG)),"'
+            AND SUBSTR(data.DESTINATION_COUNTRY,1,2) = '", gsub(",.*$", "", DST),"'", sep = "")
     } else if (level == 'R2R'){
-      script = paste("WHERE jn5.AREA = '", ORG,"' AND jn6.AREA = '", DST,"'", sep = "")
+      script = paste("WHERE jn5.AREA = '", gsub(",.*$", "", gsub(",.*$", "", ORG)),"' AND jn6.AREA = '", gsub(",.*$", "", DST),"'", sep = "")
     } else if (level == 'C2R'){
-      script = paste("WHERE SUBSTR(data.ORIGIN_COUNTRY,1,2) = '", ORG,"'
-                     AND jn6.AREA = '", DST,"'", sep = "")
+      script = paste("WHERE SUBSTR(data.ORIGIN_COUNTRY,1,2) = '", gsub(",.*$", "", gsub(",.*$", "", ORG)),"'
+                     AND jn6.AREA = '", gsub(",.*$", "", DST),"'", sep = "")
     } else if (level == 'R2C'){
-      script = paste("WHERE jn5.AREA = '", ORG,"'
-                     AND SUBSTR(data.DESTINATION_COUNTRY,1,2) = '", DST,"'", sep = "")
+      script = paste("WHERE jn5.AREA = '", gsub(",.*$", "", gsub(",.*$", "", ORG)),"'
+                     AND SUBSTR(data.DESTINATION_COUNTRY,1,2) = '", gsub(",.*$", "", DST),"'", sep = "")
     } else if (level == 'ALL'){
       script = ''
     } else if (level == 'C2W'){
-      script = paste("WHERE SUBSTR(data.ORIGIN_COUNTRY,1,2) = '", ORG,"'", sep = "")
+      script = paste("WHERE SUBSTR(data.ORIGIN_COUNTRY,1,2) = '", gsub(",.*$", "", gsub(",.*$", "", ORG)),"'", sep = "")
     } else if (level == 'W2C'){
-      script = paste("WHERE SUBSTR(data.DESTINATION_COUNTRY,1,2) = '", DST,"'", sep = "")
+      script = paste("WHERE SUBSTR(data.DESTINATION_COUNTRY,1,2) = '", gsub(",.*$", "", DST),"'", sep = "")
     } else if (level == 'R2W'){
-      script = paste("WHERE jn5.AREA = '", ORG,"'", sep = "")
+      script = paste("WHERE jn5.AREA = '", gsub(",.*$", "", gsub(",.*$", "", ORG)),"'", sep = "")
     } else if (level == 'W2R'){
-      script = paste("WHERE jn6.AREA = '", DST,"'", sep = "")
+      script = paste("WHERE jn6.AREA = '", gsub(",.*$", "", DST),"'", sep = "")
     }
     
   } else {
     if (level == 'C2C'){
       script = paste("
-                     WHERE SUBSTR(data.ORIGIN_COUNTRY,1,2) = '", ORG,"'
-                     AND SUBSTR(data.DESTINATION_COUNTRY,1,2) = '", DST,"'
+                     WHERE SUBSTR(data.ORIGIN_COUNTRY,1,2) = '", gsub(",.*$", "", gsub(",.*$", "", ORG)),"'
+                     AND SUBSTR(data.DESTINATION_COUNTRY,1,2) = '", gsub(",.*$", "", DST),"'
                      AND data.CARGO_YEAR = ", year, sep = "")
     } else if (level == 'R2R'){
-      script = paste("WHERE jn5.AREA = '", ORG,"'
-                     AND jn6.AREA = '", DST,"'
+      script = paste("WHERE jn5.AREA = '", gsub(",.*$", "", gsub(",.*$", "", ORG)),"'
+                     AND jn6.AREA = '", gsub(",.*$", "", DST),"'
                      AND data.CARGO_YEAR = ", year, sep = "")
     } else if (level == 'C2R'){
-      script = paste("WHERE SUBSTR(data.ORIGIN_COUNTRY,1,2) = '", ORG,"'
-                     AND jn6.AREA = '", DST,"'
+      script = paste("WHERE SUBSTR(data.ORIGIN_COUNTRY,1,2) = '", gsub(",.*$", "", ORG),"'
+                     AND jn6.AREA = '", gsub(",.*$", "", DST),"'
                      AND data.CARGO_YEAR = ", year, sep = "")
     } else if (level == 'R2C'){
-      script = paste("WHERE jn5.AREA = '", ORG,"'
-                     AND SUBSTR(data.DESTINATION_COUNTRY,1,2) = '", DST,"'
+      script = paste("WHERE jn5.AREA = '", gsub(",.*$", "", ORG),"'
+                     AND SUBSTR(data.DESTINATION_COUNTRY,1,2) = '", gsub(",.*$", "", DST),"'
                      AND data.CARGO_YEAR = ", year, sep = "")
     } else if (level == 'ALL'){
       script = paste(" WHERE data.CARGO_YEAR = ", year, sep = "")
     } else if (level == 'C2W'){
-      script = paste("WHERE SUBSTR(data.ORIGIN_COUNTRY,1,2) = '", ORG,"' 
+      script = paste("WHERE SUBSTR(data.ORIGIN_COUNTRY,1,2) = '", gsub(",.*$", "", ORG),"' 
                      AND data.CARGO_YEAR = ", year, sep = "")
     } else if (level == 'W2C'){
-      script = paste("WHERE SUBSTR(data.DESTINATION_COUNTRY,1,2) = '", DST,"'
+      script = paste("WHERE SUBSTR(data.DESTINATION_COUNTRY,1,2) = '", gsub(",.*$", "", DST),"'
                      AND data.CARGO_YEAR = ", year, sep = "")
     } else if (level == 'R2W'){
-      script = paste("WHERE jn5.AREA = '", ORG,"'
+      script = paste("WHERE jn5.AREA = '", gsub(",.*$", "", ORG),"'
                      AND data.CARGO_YEAR = ", year, sep = "")
     } else if (level == 'W2R'){
-      script = paste("WHERE jn6.AREA = '", DST,"'
+      script = paste("WHERE jn6.AREA = '", gsub(",.*$", "", DST),"'
                      AND data.CARGO_YEAR = ", year, sep = "")
     }
   }
