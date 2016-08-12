@@ -7,7 +7,7 @@
 
 library(shinydashboard)
 
-function(input, output) {
+function(input, output, session) {
   
   # ______CONSOLE________ ####
   output$consol = renderUI({
@@ -23,7 +23,7 @@ function(input, output) {
     # }
     
     if(show){
-      HTML(paste('
+      HTML('
                  
                  <div class="w3-card-2 w3-margin">
                  <div class="w3-container w3-padding w3-red">
@@ -32,9 +32,19 @@ function(input, output) {
                  </div>
                  
                  <div class="w3-container w3-white ">
-                 <p>', paste(capture.output(Sys.info()), collapse = ' '),'</p>
+                 ', 
+
+                 paste(sep = "",
+                       "<p>protocol: ", session$clientData$url_protocol, "</p>",
+                       "<p>hostname: ", session$clientData$url_hostname, "</p>",
+                       "<p>pathname: ", session$clientData$url_pathname, "</p>",
+                       "<p>port: ",     session$clientData$url_port,     "</p>",
+                       "<p>search: ",   session$clientData$url_search,   "</p>"
+                 )
+
+                  ,'
                  </div>
-                 </div>      '))
+                 </div>      ')
       # box(width = 12, p(capture.output(warnings())))
     } else {
       p('')
@@ -72,7 +82,7 @@ function(input, output) {
       }
     }
     
-    if(statu_bio == 'OK' & statu_fr24 == 'OK' & statu_cargois == 'OK'){
+    if(statu_cargois == 'OK' & statu_bio == 'OK' & statu_fr24 == 'OK' ){
       badge_status <- "info"
     } else {
       badge_status <- "danger"
@@ -116,10 +126,78 @@ function(input, output) {
   })
 
   
-######### load data ##########
+######### _______LOAD DATA__________ ##########
   
-  # Cargo IS query
+  # Render select ORG DST ####
+  # _Cargo IS ####
+  observeEvent(input$level,
+               {if(substr(input$level,1,1) == 'T'){
+                 updateSelectizeInput(session = session, inputId = 'org', 
+                                     choices = choice.city, server = TRUE)
+                } else if (substr(input$level,1,1) == 'R'){
+                 updateSelectizeInput(session = session, inputId = 'org', 
+                                      choices = choice.region.cargois, server = TRUE)
+                } else if (substr(input$level,1,1) == 'C'){
+                  updateSelectizeInput(session = session, inputId = 'org', 
+                                       choices = choice.country, server = TRUE)
+                } else if (substr(input$level,1,2) == 'A2'){
+                  updateSelectizeInput(session = session, inputId = 'org', 
+                                       choices = choice.airport, server = TRUE)
+                } else {
+                  updateSelectizeInput(session = session, inputId = 'org', 
+                                             choices = NULL, server = TRUE)
+                }
+              })
+  
+  observeEvent(input$level,
+               {if(substr(input$level,3,3) == 'T'){
+                 updateSelectizeInput(session = session, inputId = 'dst', 
+                                      choices = choice.city, server = TRUE)
+               } else if (substr(input$level,3,3) == 'R'){
+                 updateSelectizeInput(session = session, inputId = 'dst', 
+                                      choices = choice.region.cargois, server = TRUE)
+               } else if (substr(input$level,3,3) == 'C'){
+                 updateSelectizeInput(session = session, inputId = 'dst', 
+                                      choices = choice.country, server = TRUE)
+               } else if (substr(input$level,2,3) == '2A'){
+                 updateSelectizeInput(session = session, inputId = 'dst', 
+                                      choices = choice.airport, server = TRUE)
+               } else {
+                 updateSelectizeInput(session = session, inputId = 'dst', 
+                                      choices = NULL, server = TRUE)
+               }
+              })
+  
+  
+  # _Seabury ####
+  observeEvent(input$level.sea,
+               {if(substr(input$level.sea,1,1) == 'R'){
+                 updateSelectizeInput(session = session, inputId = 'org.sea', 
+                                      choices = choice.region.seabury, server = TRUE)
+               }else if(substr(input$level.sea,1,1) == 'C'){
+                 updateSelectizeInput(session = session, inputId = 'org.sea', 
+                                      choices = choice.sea.country, server = TRUE)
+               }else {
+                 updateSelectizeInput(session = session, inputId = 'org.sea', 
+                                      choices = NULL, server = TRUE)
+               }
+              })
+  
+  observeEvent(input$level.sea,
+               {if(substr(input$level.sea,3,3) == 'R'){
+                 updateSelectizeInput(session = session, inputId = 'dst.sea', 
+                                      choices = choice.region.seabury, server = TRUE)
+               }else if(substr(input$level.sea,3,3) == 'C'){
+                 updateSelectizeInput(session = session, inputId = 'dst.sea', 
+                                      choices = choice.sea.country, server = TRUE)
+               }else {
+                 updateSelectizeInput(session = session, inputId = 'dst.sea', 
+                                      choices = NULL, server = TRUE)
+               }
+              })
+  
 
+  # Cargo IS query ####
   DATA2 <- eventReactive(input$go2, {
     if(input$yld_evo){
       dat <- CargoIS.SQL.query(CargoDB, 
@@ -158,7 +236,7 @@ function(input, output) {
   })
   
   
-  # AIRPORT LOCATION
+  # AIRPORT LOCATION ####
   AIRPORT_LOCATION <- reactive({
     get.airport.loc()
   })
@@ -264,7 +342,7 @@ function(input, output) {
   ## value box 
   output$box.count_obs = renderValueBox({
     valueBox(
-      length(table(DATA()$DESTINATION_AIRPORT_CODE)), "Airports",
+      length(unique(c(DATA()$DESTINATION_AIRPORT_CODE, DATA()$ORIGIN_AIRPORT_CODE))), "Airports",
       icon = icon("plane"), color = "purple"
     )
   })
@@ -460,9 +538,11 @@ function(input, output) {
                        selected = WeightBreak)
   })
   
-  # trigger 
-  observe({
+  # trigger code only if input$check_display_wb is non null
+  observe({ 
+    
     if(!is.null(input$check_display_wb)){
+      
       output$freq_shipment_evo <- renderPlot({
         
         data <- data.frame(DATA(), stringsAsFactors = FALSE)
@@ -493,10 +573,10 @@ function(input, output) {
           xlab('Date') +
           ggtitle(bquote(atop(.(plot.title), atop(italic(.(plot.subtitle)), "")))) +
           
-          scale_colour_discrete(name="Air waybill\nWeight", breaks=WeightBreak)+
+          scale_colour_discrete(name="Air waybill\nWeight", breaks=WeightBreak)
           # labels=c("0-45kg", "45-100kg", "100-300kg",'300-500kg',
           #          '500-1000kg','1000+kg')
-          theme_bw()
+          # theme_bw()
         
         # DOWNLOAD PLOT
         output$cargois_dl_freq_shipment_evo <- downloadHandler(
@@ -538,8 +618,8 @@ function(input, output) {
               geom_text(aes(label=frequency), vjust=1.6, color="white", size=3.5)+
               scale_x_discrete(limits = WeightBreak)+
               theme(legend.position="right", legend.box = "horizontal" ) +
-              labs(title= 'Distribution of AWB', x = 'Weight Break', y = 'Frequency')+
-              theme_bw()
+              labs(title= 'Distribution of AWB', x = 'Weight Break', y = 'Frequency')
+              # theme_bw()
           
           # DOWNLOAD PLOT P_BAR: distribution of AWB
           output$cargois_dl_dist_weight_awb <- downloadHandler(
@@ -629,7 +709,7 @@ function(input, output) {
       })
       
       
-      # gross yield vs distance  ####
+      # yield vs distance  ####
       output$cargois_gy_distance <- renderPlot({
         p_gy_distance <- ggplot(data = versus_data_cargois(), aes(x = dist, 
                                                                   y = eval(parse(text=input$cargois_versus_plot_gyny))
@@ -705,8 +785,31 @@ function(input, output) {
         )
         p_avgweight_distance
       })
+      
+      ## output the used data table
+      output$table_versus_plot <- renderDataTable({
+        data <- data.frame(versus_datatable_cargois())
+        colnames(data) <- c('DISTANCE', 'WEIGHT_BREAK', 'WEIGHT_SUM', 'AWB_COUNT',
+                            'WEIGHT_CHARGES', 'SURCHARGES', 'GROSS_YLD','NET_YIELD')
+        
+        ##  downloadable versus_datatable_cargois
+        output$dl_table_versus_plot <- downloadHandler(
+          #- This function returns a string which tells the client
+          #- browser what name to use when saving the file.
+          filename <- function() {
+            paste('datatable_with_dist_', paste(input$org, input$dst, input$year, sep = '_'),'.csv', sep = "")
+          },
+          #- This function should write data to a file given to it by
+          #- the argument 'file'.
+          content <- function(file) {
+            ### Write to a file specified by the 'file' argument
+            write.table(data.frame(data), file, sep = ',',
+                        row.names = FALSE, col.names = TRUE)
+          }
+        )
+        data
+      })
     } # end if
-    
   })
   
 
@@ -781,6 +884,9 @@ function(input, output) {
     selectizeInput('year.sea', 'Select year', choices = choice_year_sea)
   })
   
+  updateSelectizeInput(session = session, inputId = 'gxcode.finder', 
+                       choices = choice_gx_code, server = TRUE)
+  
   ######### Seabury treemaps ########
 
   # Seabury query
@@ -799,103 +905,82 @@ function(input, output) {
                                 level = input$level.sea, 
                                 ORG = input$org.sea,
                                 DST = input$dst.sea, 
-                                year = input$year.sea)      #TODO: create a proper YEAR value for SB
+                                year = input$year.sea)      
     
     dat
   })
   
-  output$tree.g1 <- renderGvis({
-    data <- data.frame(DATA.SEA())
-    if(input$sfc.air == 'AIRWEIGHT_AIRVALUE'){
-      dt <- treemap_dt_sea_gvis(data, AIR=TRUE)
-      
-    } else if (input$sfc.air == 'SFCWEIGHT_SFCVALUE'){
-      dt <- treemap_dt_sea_gvis(data, AIR=FALSE)
-      
-    }
-    
-    # output the datatable
-    output$sea_treemap_table <- renderDataTable({
-      dt[,-6] # do not display {logVALUEPERKILO}
-    })
-    
-    # download data table
-    output$dl_sea_treemap <- downloadHandler(
-      #- This function returns a string which tells the client
-      #- browser what name to use when saving the file.
-      filename <- function() {
-        paste('Seabury_commodities', paste(input$org.sea, input$dst.sea, input$year.sea, sep = '_'),'.csv', sep = "")
-      },
-      #- This function should write data to a file given to it by
-      #- the argument 'file'.
-      content <- function(file) {
-        ### Write to a file specified by the 'file' argument
-        write.table(dt[,-6], file, sep = ',',
-                    row.names = FALSE, col.names = TRUE)
+  output$tree.g1 <- #observeEvent(DATA.SEA(),{
+    renderGvis({
+      input$go.sea
+      data <- data.frame(DATA.SEA())
+      if(input$sfc.air == 'AIRWEIGHT_AIRVALUE'){
+        dt <- treemap_dt_sea_gvis(data, AIR=TRUE)
+        
+      } else if (input$sfc.air == 'SFCWEIGHT_SFCVALUE'){
+        dt <- treemap_dt_sea_gvis(data, AIR=FALSE)
+        
       }
-    )
-    
-    treemap_sea_gvis(dt, ORG=input$org.sea, DST= input$dst.sea, YEAR=input$year.sea)
-  })
+      
+      # output the datatable
+      output$sea_treemap_table <- renderDataTable({
+        dt[,-6] # do not display {logVALUEPERKILO}
+      })
+      
+      # download data table
+      output$dl_sea_treemap <- downloadHandler(
+        #- This function returns a string which tells the client
+        #- browser what name to use when saving the file.
+        filename <- function() {
+          paste('Seabury_commodities', paste(input$org.sea, input$dst.sea, input$year.sea, sep = '_'),'.csv', sep = "")
+        },
+        #- This function should write data to a file given to it by
+        #- the argument 'file'.
+        content <- function(file) {
+          ### Write to a file specified by the 'file' argument
+          write.table(dt[,-6], file, sep = ',',
+                      row.names = FALSE, col.names = TRUE)
+        }
+      )
+      isolate({
+        orgs <- input$org.sea
+        dsts <- input$dst.sea
+        years <- input$year.sea
+      })
+      treemap_sea_gvis(dt, ORG=orgs, DST= dsts, YEAR=years)
+      
+    })
+  #})
 
   
-  output$gxcode.finder <-  renderTable({
-    gx.code <- Seabury.SQL.get.code(CargoDB, input$gxname)
-  })
+  # output$gxcode.finder_ui <-  renderUI({
+  #   selectInput('gxcode.finder', 'Select the commodity code', choices = choice_gx_code)
+  # })
   # data.sea.gx
   
 ######### load data for plotting evolution ##########
   
   ## get data for selected commodities
   DATA.SEA.GX <- eventReactive(input$gx.evo.plot, {
-    n <- 1
+
     if(input$gx.evo.plot.all){
-      # withProgress(message = 'Loading data...', value = 0, {
-      #   # Number of times we'll go through the loop
-      #  
-      #   for (i in 1:n) {
-      #     # Each time through the loop, add another row of data. This is
-      #     # a stand-in for a long-running computation.
-      # 
-      #     
-      #     # Increment the progress bar, and update the detail text.
-      #     incProgress(1/n, detail = paste( i*10, '%',sep = ''))
-      #   }
-      # })
       qry <-  Seabury.SQL.evo.query(CargoDB,  
                                     level = input$level.sea, 
-                                    ORG = input$org.sea, 
-                                    DST = input$dst.sea,
+                                    ORG = gsub(",.*$", "",input$org.sea), 
+                                    DST = gsub(",.*$", "",input$dst.sea),
                                     GX.code = NA,
                                     year = NA, 
                                     country.name = FALSE, 
                                     SFC = input$surface.air)
       return(qry)
     }else{
-      gx.code <- Seabury.SQL.get.code(CargoDB, input$gxname)
-      # withProgress(message = 'Loading data...', value = 0, {
-      #   # Number of times we'll go through the loop
-      #   for (i in 1:n) {
-      #     # Each time through the loop, add another row of data. This is
-      #     # a stand-in for a long-running computation.
-      #     qry <- Seabury.SQL.evo.query(CargoDB,  
-      #                                  level = input$level.sea, 
-      #                                  ORG = input$org.sea, 
-      #                                  DST = input$dst.sea,
-      #                                  GX.code = gx.code$GXCODE,
-      #                                  year = NA, 
-      #                                  country.name = FALSE, 
-      #                                  SFC = input$surface.air)
-      #     
-      #     # Increment the progress bar, and update the detail text.
-      #     incProgress(1/n, detail = paste( i*10, '%',sep = ''))
-      #   }
-      # })
+      # gx.code <- Seabury.SQL.get.code(CargoDB, input$gxname)
+      # gx.code <- data.frame(GXCODE = input$gxcode.finder)
       qry <- Seabury.SQL.evo.query(CargoDB,  
                                    level = input$level.sea, 
-                                   ORG = input$org.sea, 
-                                   DST = input$dst.sea,
-                                   GX.code = gx.code$GXCODE,
+                                   ORG = gsub(",.*$", "",input$org.sea), 
+                                   DST = gsub(",.*$", "",input$dst.sea),
+                                   GX.code = input$gxcode.finder,
                                    year = NA, 
                                    country.name = FALSE, 
                                    SFC = input$surface.air)
@@ -1294,7 +1379,7 @@ WHERE COMPLETION_STATUS=0\n"
   })
   ## 6.2 make barplot####
   output$fr24_freq_check_dt_quality <- renderPlotly({
-    data <- FR24_BIO_AC()
+    data <- data.frame(FR24_BIO_AC())
     df <- data.frame(table(data[,input$fr24_freq_sel_col]))
     
     p <- plot_ly(df[order(df$Freq, decreasing = TRUE),],
@@ -1308,8 +1393,6 @@ WHERE COMPLETION_STATUS=0\n"
                yaxis = list(title = "Frequency")
              ))
     p
-    
-    
     # if(nrow(df)< 10){
     #   height = 500
     # } else {
@@ -1832,4 +1915,49 @@ WHERE COMPLETION_STATUS=0\n"
 #   # OPERATOR_NAME,IATA_OP,MANAGER_NAME,IATA_MN,AC_TYPE_CODE,
 #   # AC_VAR_DESC,AC_MANU,EG_NAME,EG_MANU,STATUS,START_DATE,
 #   # END_DATE,USAGE
+# })
+## if query level == R2R, then change the text input into select input
+## if level == T2T, hide renderUI and show selectizeInput (with updateSelectizeInput)
+## to increase performance
+# output$cargois_ui_org <- renderUI({
+#   if(substr(input$level,1,1) == 'R'){
+#     # render selectinput
+#     selectInput('org', 'Origin', choices = choice.region.cargois)
+#   }else if(substr(input$level,1,1) == 'T'){
+#     selectizeInput('org', 'Origin', choices = choice.city)
+#   }else{
+#     # render text input
+#     textInput('org','Origin')
+#   }
+# })
+# output$cargois_ui_dst <- renderUI({
+#   if(substr(input$level,3,3) == 'R'){
+#     # render selectinput
+#     selectInput('dst', 'Destination', choices = choice.region.cargois)
+#   }else if(substr(input$level,3,3) == 'T'){
+#     selectizeInput('dst', 'Destination', choices = choice.city)
+#   }else{
+#     # render text input
+#     textInput('dst','Destination')
+#   }
+# })
+
+# output$org.sea.ui <- renderUI({
+#   if(substr(input$level.sea,1,1) == 'R'){
+#     # render selectinput
+#     selectInput('org.sea', 'Origin', choices = choice.region.seabury)
+#   }else{
+#     # render text input
+#     textInput('org.sea','Origin')
+#   }
+# })
+# 
+# output$dst.sea.ui <- renderUI({
+#   if(substr(input$level.sea,3,3) == 'R'){
+#     # render selectinput
+#     selectInput('dst.sea', 'Destination', choices = choice.region.seabury)
+#   }else{
+#     # render text input
+#     textInput('dst.sea','Destination')
+#   }
 # })

@@ -1,24 +1,54 @@
 #-------------------------------------------------------------
-# This is the global environment definition of Cargo IS Miner. You can
+# This is the global environment definition of Cargo Data Miner. You can
 # run the application by clicking 'Run App' above.
 #
 # Xuzhou QIN, xuzhou.qin@airbus.com
 #-------------------------------------------------------------
 
+#' If you want to change the defaut web browser
+#' modify and run the following variable before running the app
+#' 
+#' ###### Browser parameter #######
+# browser.path = file.path("C:/Users/QIN_XUZ/AppData/Local/Google/Chrome/Application/chrome.exe") 
+# options(browser = browser.path)
+# shiny::runApp(launch.browser=TRUE)
 
-# define environment
-mainDir = 'C:/Users/QIN_XUZ/Documents/CARGOIS'
-dir.create(mainDir, showWarnings = FALSE)
 
-## create folders if not exist
-TEMPS = paste(mainDir,'Temporaire',sep = '/');dir.create(TEMPS, showWarnings = FALSE)
-OUTPUT = paste(mainDir,'output',sep = '/');dir.create(OUTPUT, showWarnings = FALSE)
-FLATFILE = paste(mainDir,'CARGOIS_raw',sep = '/');dir.create(FLATFILE, showWarnings = FALSE)
-SCRIPTS = paste(mainDir,'Scripts',sep = '/');dir.create(SCRIPTS, showWarnings = FALSE)
-ANALYSIS = paste(mainDir,'Analysis',sep = '/');dir.create(ANALYSIS, showWarnings = FALSE)
-DATA = paste(mainDir,'DATA',sep = '/');dir.create(DATA, showWarnings = FALSE)
+####################################################
+#' CONNECTION PARAMETERS
+#' 
+#' Modify it before the first run of the application
+####################################################
+#' ROracle connection string
+#' for Cargo IS, Seabury
+host = 'p595dodmp01'
+port = 1521
+sid = 'DBUPA269'
+username_cargois <- 'CARGO'
+password_cargois <- 'dbu1_cargo'
 
+
+#' RODBC MS SQL server connection string 
+#' for BIO
+driver_bio <- 'SQL Server'
+server_bio <- 'fr0-bio-p01'
+port_bio <- 10335
+username_bio <- ''
+password_bio <- ''
+trusted_connection_bio <- TRUE # if TRUE connect with windows login and pw
+
+
+#' RMySQL MySQL connection string 
+#' for FlightRadar 24
+user_fr24 <- "user_ext"
+password_fr24 <- "fr0-dmds-p01"
+dbname_fr24 <- 'FR24'
+host_fr24 <- "fr0-dmds-p01"
+
+
+###################################################
 # _____________load environment_______________ ####
+#' 
 list.of.packages <- c("ggplot2", "maps", 'rgeos', 'maptools', 'geosphere', 'ggmap','RColorBrewer',
                       "zoo", 'lubridate', "dplyr", "rworldmap",
                       'data.table', 'ggthemes','xts','gridExtra', 'reshape2', 'devtools','DT', 'shinydashboard',
@@ -28,22 +58,21 @@ new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"
 if(length(new.packages)) install.packages(new.packages)
 
 check.ROracle <- 'ROracle'  %in% installed.packages()[,'Package']
-if(!check.ROracle){install.packages(file.path(mainDir,'ROracle_1.2-1.zip'), repos = NULL, type="source")}
+if(!check.ROracle){install.packages('Rpackages/ROracle_1.2-1.zip', repos = NULL, type="source")}
 
 
-library(ROracle) # connect to CargoIS oracle DB
-drv = dbDriver('Oracle')
-host = 'p595dodmp01'
-port = 1521
-sid = 'DBUPA269'
-connect.string <- paste("(DESCRIPTION=",
-                        "(ADDRESS=(PROTOCOL=tcp)(HOST=", host, ")(PORT=", port, "))",
-                        "(CONNECT_DATA=(SID=", sid, ")))", sep = "")
-# dbConnect(drv, username = 'CARGO', password = 'dbu1_cargo', dbname = connect.string)
+########## CARGO IS, SEABURY CONNECTION #################
+library(ROracle)
 CargoDBcon <- function(){
-  CargoDB <- try(dbConnect(drv, username = 'CARGO', password = 'dbu1_cargo', dbname = connect.string))
+  drv = dbDriver('Oracle')
+  connect_string_cargois <- paste("(DESCRIPTION=",
+                                  "(ADDRESS=(PROTOCOL=tcp)(HOST=", host, ")(PORT=", port, "))",
+                                  "(CONNECT_DATA=(SID=", sid, ")))", sep = "")
+  
+  CargoDB <- try(dbConnect(drv, username = username_cargois, password = password_cargois, dbname = connect_string_cargois))
   return(CargoDB)
 }
+
 CargoDB <- CargoDBcon()
 
 if(class(CargoDB) == 'try-error'){
@@ -52,59 +81,51 @@ if(class(CargoDB) == 'try-error'){
   choice_year_sea <- 'ERROR'
 }else{
   statu_cargois <- 'OK'
-  source(file.path(SCRIPTS,'CargoIS.SQL.query.R'))
-  source(file.path(SCRIPTS,'CargoIS.SQL.query.weight.R'))
-  source(file.path(SCRIPTS,'CargoIS.weight.evolution.R'))
-  source(file.path(SCRIPTS,'CargoIS.yield.evolution.R'))
-  source(file.path(SCRIPTS,'Code.finder.R'))
-  source(file.path(SCRIPTS,'sea.evo.R'))
-  source(file.path(SCRIPTS,'Seabury.SQL.evo.query.R'))
-  source(file.path(SCRIPTS,'Seabury.SQL.get.code_name.R'))
-  source(file.path(SCRIPTS,'Seabury.SQL.OD.query.R'))
-  source(file.path(SCRIPTS,'Seabury.get.year.R'))
-  source(file.path(SCRIPTS,'Yield_Cargo_evolution.R'))
+  source('Rscripts/CargoIS.SQL.query.R')
+  source('Rscripts/CargoIS.SQL.query.weight.R')
+  source('Rscripts/CargoIS.weight.evolution.R')
+  source('Rscripts/CargoIS.yield.evolution.R')
+  source('Rscripts/Code.finder.R')
+  source('Rscripts/sea.evo.R')
+  source('Rscripts/Seabury.SQL.evo.query.R')
+  source('Rscripts/Seabury.SQL.get.code_name.R')
+  choice_gx_code <- Seabury.SQL.get.code(CargoDB)
+  source('Rscripts/Seabury.SQL.OD.query.R')
+  source('Rscripts/Seabury.get.year.R')
+  source('Rscripts/Yield_Cargo_evolution.R')
   
-  # function to get cargois year list
-  list_cargois_year <- function(CargoDB) {
-    query <- "SELECT YEAR_NUM
-                FROM A269_CARGOIS.CARGOIS_PERIOD_TO_LOAD"
-    data  <-  dbSendQuery(CargoDB, query)
-    choice_cargois_year <- fetch(data)
-    year <- sort(c(2010:max(choice_cargois_year$YEAR_NUM)),decreasing = TRUE) # create vector 2010:now
-    
-    # list_year <- lapply(year, function(x) x) 
-    # names(list_year) <- sapply(list_year,paste,collapse="")      # create a list with the proper name
-    
-    return(year)
-  }
+  source('Rscripts/CargoIS.get.input.list.R')
   choice.year <- list_cargois_year(CargoDB)
+  choice.city <- list_cargois_city(CargoDB)
+  choice.region.cargois <- list_cargois_region(CargoDB)
+  choice.country <- list_cargois_country(CargoDB)
+  choice.airport <- list_cargois_airport(CargoDB)
   
-  # function to get seabury year list
-  list_sea_year <- function(CargoDB){
-    query <- "SELECT CARGO_YEAR
-              FROM A269_CARGO.A269_CARGO_AVAILABLE_YEAR
-    WHERE DATA_ORIGIN = 'Seabury' "
-    data  <-  dbSendQuery(CargoDB, query)
-    choice_sea_year <- fetch(data)
-    result <- c(sort(choice_sea_year$CARGO_YEAR, decreasing = TRUE))
-    return(result)
-  }
+  source('Rscripts/Seabury.get.input.list.R')
   choice_year_sea <- list_sea_year(CargoDB)
+  choice.region.seabury <- list_sea_region(CargoDB)
+  choice.sea.country <- list_sea_country(CargoDB)
 }
 # CargoDB <- odbcConnect('p595dodmp01', uid = 'CARGO', pwd = 'dbu1_cargo', connection = connect.string)
 
-library(RODBC) # connect to BIO SQL server
+
+############ connect to BIO SQL server ##############
+library(RODBC)
 BIOcon <- function(){
-  BIO <- try(odbcDriverConnect('driver={SQL Server};
-                               server=fr0-bio-p01,10335;
-                               trusted_connection=true'))
+  connect_string_bio <- paste0('driver={', driver_bio, '}; server=', server_bio, ',', port_bio, '; ', 
+                              'trusted_connection=true')
+  BIO <- try(odbcDriverConnect(connect_string_bio
+                              # 'driver={SQL Server};
+                              #  server=fr0-bio-p01,10335;
+                              #  trusted_connection=true'
+                              ))
   return(BIO)
 }
 BIO <- BIOcon()
 
 if(class(BIO) == 'RODBC'){
   statu_bio <- 'OK'
-  source(file.path(SCRIPTS,'get.airport.loc.R'))
+  source('Rscripts/get.airport.loc.R')
 }else{
   statu_bio <- 'Failed'
 }
@@ -116,7 +137,8 @@ FR24con <- function(){
   for(con in all_cons){
     dbDisconnect(con)
   }
-  FR24 <- try(dbConnect(MySQL(), user="user_ext", password="fr0-dmds-p01", dbname='FR24', host="fr0-dmds-p01"))
+  FR24 <- try(dbConnect(MySQL(), user=user_fr24, password=password_fr24, 
+                        dbname=dbname_fr24, host=host_fr24))
   return(FR24)
 }
 FR24 <- FR24con()
@@ -125,7 +147,7 @@ if(class(FR24) == 'try-error'){
   statu_fr24 <- 'Failed'
 }else{
   statu_fr24 <- 'OK'
-  source(file.path(SCRIPTS,'Connecxion MySQL.R'))
+  source('Rscripts/Connecxion MySQL.R')
   
 }
 
@@ -133,7 +155,7 @@ library(googleVis)
 library(zoo)
 library(ggplot2)
 library(plyr)
-# library(parallel)
+
 library(lubridate)
 library(shinydashboard)
 library(maps)
@@ -155,7 +177,7 @@ library(ggthemes)
 library(xts)
 library(reshape2)
 library(devtools)
-# library(treemap)
+
 library(plotly)
 library(DT)
 library(RColorBrewer)
@@ -164,40 +186,28 @@ library(RColorBrewer)
 # gpclibPermit()
 
 # load functions
-# source(file.path(SCRIPTS,'CargoIS.SQL.query.R'))
-# source(file.path(SCRIPTS,'CargoIS.SQL.query.weight.R'))
-# source(file.path(SCRIPTS,'CargoIS.weight.evolution.R'))
-# source(file.path(SCRIPTS,'CargoIS.yield.evolution.R'))
-source(paste(SCRIPTS,'grs_net_yield.R', sep= '/'))
-source(file.path(SCRIPTS,'Plot.air.route.html.R'))
-# source(paste(SCRIPTS,'Plot.air.route.R', sep = '/'))
-source(paste(SCRIPTS,'info_global.R', sep = '/'))
-# source(paste(SCRIPTS,'Plot.air.route.R', sep = '/'))
-# source(file.path(SCRIPTS,'Seabury.get.year.R'))
-source(file.path(SCRIPTS,'Plot.airport.html.R'))
-source(file.path(SCRIPTS,'region_gy_ny_evo.R'))
-# source(file.path(SCRIPTS,'sea.evo.R'))
-# source(file.path(SCRIPTS,'Seabury.SQL.evo.query.R'))
-# source(file.path(SCRIPTS,'Seabury.SQL.get.code_name.R'))
-# source(file.path(SCRIPTS,'Seabury.SQL.OD.query.R'))
-# source(file.path(SCRIPTS,'Yield_Cargo_evolution.R'))
-# source(file.path(SCRIPTS,'get.airport.loc.R'))
-source(file.path(SCRIPTS,'treemap_cargois_gvis.R'))
-# source(file.path(SCRIPTS,'Code.finder.R'))
-# source(file.path(SCRIPTS,'Connecxion MySQL.R'))
 
+source('Rscripts/grs_net_yield.R')
+source('Rscripts/Plot.air.route.html.R')
 
+source('Rscripts/info_global.R')
+
+source('Rscripts/Plot.airport.html.R')
+source('Rscripts/region_gy_ny_evo.R')
+
+source('Rscripts/treemap_cargois_gvis.R')
 
 ######## load lists ######## 
-choice.level = list("Region-Region"= 'R2R',
-                    'Country-Region' ='C2R',
-                    'Region-Country'='R2C',
-                    'Country-Country'= 'C2C',
-                    'Country-World'='C2W',
-                    'World-Country'='W2C',
-                    'Region-Airport'='R2A',
-                    'Airport-Region'='A2R',
-                    'Airport-Airport' = 'A2A',
+choice.level = list("Region - Region"= 'R2R',
+                    'City - City' = 'T2T',
+                    'Country - Region' ='C2R',
+                    'Region - Country'='R2C',
+                    'Country - Country'= 'C2C',
+                    'Country - World'='C2W',
+                    'World - Country'='W2C',
+                    'Region - Airport'='R2A',
+                    'Airport - Region'='A2R',
+                    'Airport - Airport' = 'A2A',
                     'ALL' = 'ALL')
 # 
 # choice.year = list('2010' = 2010,
@@ -208,7 +218,6 @@ choice.level = list("Region-Region"= 'R2R',
 #                    '2015' = 2015,
 #                    '2016' = 2016,
 #                    'ALL' = NA)
-
 
 
 choice.projection = list("Mercator" = 'Mercator', 
@@ -371,6 +380,7 @@ treemap_dt_sea_gvis <- function(data, AIR = TRUE){
   tt$VALUEPERKILO[is.na(tt$VALUEPERKILO)] <- 0
   return(tt)
 }
+
 treemap_sea_gvis <- function(data, ORG, DST, YEAR){
   title <- paste('Treemap of commodity types from ',ORG,' to ',DST,' ', YEAR, sep = '')
   gvisTreeMap(data = data, idvar = 'NAME', parentvar = 'PARENT', sizevar = 'WEIGHT',

@@ -35,14 +35,27 @@ cargo.is.input <- box(width = 4,
                       # ),
                       uiOutput(
                         'year_cargois_ui'     ),
-                      textInput('org','Origin'),
-                      textInput('dst','Destination'),
+                      
+                      # uiOutput(
+                      #   'cargois_ui_org'
+                      # ),
+                      # uiOutput(
+                      #   'cargois_ui_dst'
+                      # ),
+                      
+                      selectizeInput('org', 'Origin', choices = NULL),
+
+                      selectizeInput('dst', 'Destination', choices = NULL),
+                      
+                      # textInput('org','Origin'),
+                      # textInput('dst','Destination'),
                       
                       checkboxInput('yld_evo', 'Plot evolution since 2010 (this could take several minutes)',
                                     FALSE),
                       checkboxInput('min_max_avg', 'Show min/max/average',
                                     FALSE),
-                      actionButton('go2','Load data') ,
+                      actionButton('go2','Load data',
+                                   style="color: #fff; background-color: #337ab7; border-color: #2e6da4") ,
                       downloadButton('dl_cargo_is', 'Download raw data')
                       
                       #htmlOutput("text2")
@@ -102,13 +115,21 @@ fluidrow.Treemap = fluidRow(
                     tabBox(
                       title = 'Origin Countries Treemap', 
                       # tabPanel('Plot',plotOutput('tree.org_cty')),
-                      tabPanel('Plot',htmlOutput('tree.org_cty_gvis')),
+                      
+                      tabPanel('Plot',
+                               div(htmlOutput('tree.org_cty_gvis'), 
+                                   style = 'overflow-x: scroll')),
+                      
                       tabPanel('Table', dataTableOutput('tree.org_cty_dtable'))
                     ),
                     
                     tabBox(
                       title = 'Destination Countries Treemap', 
-                      tabPanel('Plot', htmlOutput('tree.dst_cty_gvis')),
+                      
+                      tabPanel('Plot', 
+                               div(htmlOutput('tree.dst_cty_gvis'), 
+                                   style = 'overflow-x: scroll')),
+                      
                       tabPanel('Table', dataTableOutput('tree.dst_cty_dtable'))
                     )
                   )
@@ -121,7 +142,10 @@ fluidrow.Yield_evo =fluidRow(
                       # tabPanel( title = 'Yield Evolution',  plotlyOutput('evo_yield')),
                       # tabPanel('Weight Evolution',plotlyOutput('evo_weight') ),
                       # tabPanel('Table', dataTableOutput('evo_plot_dtable')),
-                      tabPanel('Yield Evolution', htmlOutput('yld_evo_cargois_gvis')),
+                      tabPanel('Yield Evolution', 
+                               div(htmlOutput('yld_evo_cargois_gvis'),
+                                  style = 'overflow-x: scroll')),
+                      
                       tabPanel('Table', dataTableOutput('evo_plot_dtable'))
                           
                       )
@@ -189,52 +213,87 @@ box.yield.calc.map.out <- box(width = 9, height = 700,
 fluidRow.other_analysis <- fluidPage(
   
   # _input parameters ####
-  column(width = 3,
-         div(box(title = 'Parameters', solidHeader = TRUE,
-                  status = 'warning',uiOutput('select_wb'),width = '100%',
-                 selectInput('cargois_versus_plot_gyny','Choose the yield',
-                             choices = list('Gross yield' = 'gy',
-                                            'Net yield' = 'ny')),
-             textInput('cargois_width','Set the width of download file',30),
-             textInput('cargois_height','Set the height of download file',15)),class = 'absolute_box')), 
-  column(width = 9, 
-      ## __ plos ####
-      fluidRow(
-      box(width = '100%', plotOutput('freq_shipment_evo'),
-          downloadButton('cargois_dl_freq_shipment_evo', 'download PNG'))
-    ),
-    fluidRow(
-      # plotOutput('dist_weight_awb'),
-      box(width = '100%', plotOutput('dist_weight_awb'),
-          downloadButton('cargois_dl_dist_weight_awb', 'download PNG')
-             )
   
-    ),
+  # column(width = 3,
+  #        div(box(title = 'Parameters', solidHeader = TRUE,
+  #                 status = 'warning',uiOutput('select_wb'),width = '100%',
+  #                selectInput('cargois_versus_plot_gyny','Choose the yield',
+  #                            choices = list('Gross yield' = 'gy',
+  #                                           'Net yield' = 'ny')),
+  #            textInput('cargois_width','Set the width of download file',30),
+  #            textInput('cargois_height','Set the height of download file',15)),
+  #            class = 'absolute_box')), 
+  # column(width = 9, 
+  #     ## __ plos ####
+  #     fluidRow(
+  #     box(width = '100%', plotOutput('freq_shipment_evo'),
+  #         downloadButton('cargois_dl_freq_shipment_evo', 'download PNG'))
+  #   ),
+  #   fluidRow(
+  #     # plotOutput('dist_weight_awb'),
+  #     box(width = '100%', plotOutput('dist_weight_awb'),
+  #         downloadButton('cargois_dl_dist_weight_awb', 'download PNG')
+  #            )
+  # 
+  #   ),
+  
     fluidRow(
+      column(width = 3, 
+          box(title = 'Parameters', 
+              solidHeader = TRUE,
+              status = 'warning',uiOutput('select_wb'),width = '100%',
+              
+              radioButtons('cargois_versus_plot_gyny','Choose the yield',
+                          choices = list('Gross yield' = 'gy',
+                                         'Net yield' = 'ny')),
+              
+              # radioButtons('cargois_versus_plot_avg_para', 'Choose the arithmetic',
+              #              choices = list('Average yield' = 'normal',
+              #                             'Weighted average yield' = 'weight')),
+              
+              textInput('cargois_width','Set the width of download file',30),
+              
+              textInput('cargois_height','Set the height of download file',15)
+          )
+      ),
+      
       
       ## __versus plot ####
-      tabBox(width = '100%', 
-             tabPanel('Weight vs Distance',plotOutput('cargois_corr_plot'),
+      column(width = 9,
+          tabBox(width = '100%', 
+              tabPanel('Shipment freq evoluion', plotOutput('freq_shipment_evo'),
+                      downloadButton('cargois_dl_freq_shipment_evo', 'download PNG')
+                      ),
+
+              tabPanel('Shipment weight distribution', plotOutput('dist_weight_awb'),
+                      downloadButton('cargois_dl_dist_weight_awb', 'download PNG')
+                    ),
+
+              tabPanel('Weight vs Distance',plotOutput('cargois_corr_plot'),
                       downloadButton('cargois_dl_weight_distance', 'download PNG')
                       ),
-             tabPanel('Frequency vs Distance', plotOutput('cargois_freq_distance'),
+              tabPanel('Frequency vs Distance', plotOutput('cargois_freq_distance'),
                       downloadButton('cargois_dl_freq_distance', 'download PNG')
                       ),
-             tabPanel('Revenue vs Distance', plotOutput('cargois_revenu_distance'),
+              tabPanel('Revenue vs Distance', plotOutput('cargois_revenu_distance'),
                       downloadButton('cargois_dl_revenu_distance', 'download PNG')
-             ),
-             tabPanel('Yield vs Distance', plotOutput('cargois_gy_distance'),
+                      ),
+              tabPanel('Yield vs Distance', plotOutput('cargois_gy_distance'),
                       downloadButton('cargois_dl_gy_distance', 'download PNG')
-             ),
-             tabPanel('Avg_weight vs Distance', plotOutput('cargois_avgweight_distance'),
+              ),
+              tabPanel('Avg_weight vs Distance', plotOutput('cargois_avgweight_distance'),
                       downloadButton('cargois_dl_avgweight_distance', 'download PNG')
-             )
+              )
           )
-    # ),
-    # fluidRow(
-    #   box(width = '100%', plotOutput('cargois_corr_plot'),
-    #       downloadButton('cargois_dl_weight_distance', 'download PNG'))
-    )
+      )
+    ),
+  
+  fluidRow(
+    box('Data preview', width = 12,
+        div(dataTableOutput('table_versus_plot'), 
+            style = 'overflow-x: scroll'),
+        downloadButton('dl_table_versus_plot', 'Download data')
+        )
   )
 )
 
@@ -262,13 +321,19 @@ fluidpage_stat_analysis <- fluidPage(
 fluidrow_Seabury = fluidRow(
   box(width = 3,
       title = 'Seabury query', status = 'warning', solidHeader = TRUE,
-      h3('Treemap'),
+      h4(strong('---Treemap---')),
       selectizeInput(
         'level.sea', 'Query level', choices = choice.level.sea
       ),
       uiOutput('year.sea.ui'),
-      textInput('org.sea','Origin'),
-      textInput('dst.sea','Destination'),
+      # uiOutput('org.sea.ui'),
+      # uiOutput('dst.sea.ui'),
+      
+      selectizeInput('org.sea', 'Origin', choices = NULL),
+      selectizeInput('dst.sea', 'Destination', choices = NULL),
+      
+      # textInput('org.sea','Origin'),
+      # textInput('dst.sea','Destination'),
       selectizeInput(
         'sfc.air', 'Select freight type', choices = choice.sfc.air
       ),
@@ -276,13 +341,17 @@ fluidrow_Seabury = fluidRow(
       
       downloadButton('dl_sea_treemap', 'Download data table'),
       
-      htmlOutput("text.sea"),
+      # htmlOutput("text.sea"),
       ####
       
       # br(),
-      h3('Evolution'),
-      textInput('gxname','Enter GXNAME'),
-      tableOutput('gxcode.finder'),
+      h4(strong('---Evolution---')),
+      # textInput('gxname','Enter GXNAME'),
+      # tableOutput('gxcode.finder'),
+      # uiOutput('gxcode.finder_ui'),
+      
+      selectizeInput('gxcode.finder', 'Select the commodity that you want to plot',
+                     choices=NULL),
       # selectizeInput(
       #   'gx.query.level', 'Select GX level to query', choices = choice.level.sea.GX.level
       # ),
@@ -297,7 +366,7 @@ fluidrow_Seabury = fluidRow(
       
   ),
   
-  box(width = 9,height = 280,
+  box(width = 9, collapsible = TRUE, collapsed = TRUE,
       title = 'How to use?', status = 'success', solidHeader = TRUE
   ),
   
@@ -403,8 +472,10 @@ fluidrow_FR24_load <- fluidPage(
         p('if there is no information after [LANDING_TIME], this means that this aircraft is nolonger in service today. We do not have the current status in BIO database.'),
         div(dataTableOutput('text_fr24'),
             style = 'overflow-x: scroll')),
-    textOutput('fr24_bio_ac_colnames'),
-    textOutput('test2_fr24')
+    
+    tableOutput('test_fr24_tab')
+    # textOutput('fr24_bio_ac_colnames'),
+    # textOutput('test2_fr24')
   )
 )
 
@@ -487,7 +558,7 @@ dashboardPage(
       ),
       
       menuItem('Tools', icon = icon('gear'),
-               menuSubItem('developing', tabName = 'tool1', icon = icon('gear')),
+               menuSubItem('Code finder', tabName = 'tool1', icon = icon('search')),
                menuSubItem("developing", tabName = "tool2", icon = icon("gear"))
       )
       #-------------------------------------------
@@ -576,11 +647,6 @@ dashboardPage(
     #                               img(src= 'hourglass.gif')),
     #                           id="loadmessage")),
     
-    # ------------- Code Finder####
-    selectizeInput('level_codefinder','Code finder', choices = choice.codefinder),
-    textInput('name_codefinder','Name'),
-    tableOutput('out_codefinder'),
-    # actionButton('Find_code', 'Find code'),
 
     br(),
     
@@ -795,7 +861,12 @@ dashboardPage(
         tabName = 'tool1',
 
           # p('Develop: user consol')
-        bootstrapPage(
+        bootstrapPage(    # ------------- Code Finder####
+                          selectizeInput('level_codefinder','Code finder', choices = choice.codefinder),
+                          textInput('name_codefinder','Name'),
+                          tableOutput('out_codefinder')
+                          # actionButton('Find_code', 'Find code'),
+                          
  
           )
 
