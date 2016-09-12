@@ -634,8 +634,8 @@ dashboardPage(
     tags$head(HTML('
                    
      <link rel="stylesheet" href="W3S.css">
-     <link rel="stylesheet" href="https://npmcdn.com/leaflet@1.0.0-rc.3/dist/leaflet.css" />
-     <script src="https://npmcdn.com/leaflet@1.0.0-rc.3/dist/leaflet.js"></script>
+     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.0-rc.3/dist/leaflet.css" />
+     <script src="https://unpkg.com/leaflet@1.0.0-rc.3/dist/leaflet.js"></script>
      <script src="arc.js"></script>
      <script src="Leaflet.Arc.min.js"></script>')),
     
